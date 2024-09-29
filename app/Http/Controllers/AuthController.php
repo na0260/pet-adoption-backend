@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Validator;
@@ -10,61 +11,61 @@ use Tymon\JWTAuth\Exceptions\JWTException;
 
 class AuthController extends Controller
 {
-    public function register(Request $request)
+    public function register(Request $request): JsonResponse
     {
         try {
-            $token = $request->bearerToken() ?: $request->cookie('token');
+            $token = $request->bearerToken() || $request->cookie('token');
             if ($token) {
-                return response()->json(['status'=>"Failed",'message'=>'User already logged in'], 400);
-            }else{
-                $validator = Validator::make(request()->all(), [
+                return response()->json(['status' => "Failed", 'message' => 'User already logged in'], 400);
+            } else {
+                $validator = Validator::make($request->all(), [
                     'name' => 'required|string|max:255',
                     'email' => 'required|email|unique:users|max:255',
                     'password' => 'required|confirmed|min:8',
                     'password_confirmation' => 'required'
                 ]);
 
-                if($validator->fails()){
+                if ($validator->fails()) {
                     return response()->json($validator->errors()->toJson(), 400);
                 }
 
-                $user = new User();
-                $user->name = request()->name;
-                $user->email = request()->email;
-                $user->password = bcrypt(request()->password);
-                $user->save();
+                $user = User::create([
+                    'name' => request()->name,
+                    'email' => request()->email,
+                    'password' => bcrypt(request()->password),
+                ]);
 
-                return response()->json(['status'=>"Success",'data'=>$user], 201);
+                return response()->json(['status' => "Success", 'data' => $user], 201);
             }
-        }catch (\Exception $e){
-            return response()->json(['status'=>"Failed",'message'=>$e], 400);
+        } catch (\Exception $e) {
+            return response()->json(['status' => "Failed", 'message' => $e->getMessage()], 400);
         }
     }
 
-    public function login()
+    public function login(Request $request)
     {
         try {
-            $credentials = request(['email', 'password']);
+            $credentials = $request->only('email', 'password');
             try {
-                if (! $token = auth('api')->attempt($credentials)) {
-                    return response()->json(['status'=>"Failed",'message'=>'Unauthorized'], 401);
+                if (!$token = auth('api')->attempt($credentials)) {
+                    return response()->json(['status' => "Failed", 'message' => 'Unauthorized'], 401);
                 }
-            }catch (JWTException $e){
-                return response()->json(['status'=>"Failed",'message'=>$e], 500);
+            } catch (JWTException $e) {
+                return response()->json(['status' => "Failed", 'message' => $e->getMessage()], 500);
             }
 
-            $expiration = 60 * 24; // 60 minutes * 24 hours
+            $expiration = 60 * 24;
 
-            $cookie = Cookie::make('token', $token, $expiration, '/', null, true, true); // Secure, HttpOnly
+            $cookie = Cookie::make('token', $token, $expiration, '/', null, true, true, false, 'Strict');
 
 
-            return response()->json(['status'=>"Success",'token'=>$token], 200,)->cookie($cookie);
-        }catch(\Exception $e){
-            return response()->json(['status'=>"Error",'message'=>$e], 401);
+            return response()->json(['status' => "Success", 'token' => $token], 200)->cookie($cookie);
+        } catch (\Exception $e) {
+            return response()->json(['status' => "Error", 'message' => $e->getMessage()], 401);
         }
     }
 
-    public function me()
+    public function me(): JsonResponse
     {
         return response()->json(auth('api')->user());
     }
@@ -75,7 +76,7 @@ class AuthController extends Controller
             auth('api')->logout();
             $cookie = Cookie::forget('token');
         } catch (JWTException $e) {
-            return response()->json(['error' => 'Could not log out, please try again later'], 500);
+            return response()->json(['error' => $e->getMessage()], 500);
         }
 
         return response()->json(['message' => 'Successfully logged out'])->cookie($cookie);
