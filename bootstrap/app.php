@@ -24,4 +24,13 @@ return Application::configure(basePath: dirname(__DIR__))
                 ], 401);
             }
         });
+        $exceptions->render(function (Throwable $e, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $e->getMessage(),
+                    'retry_after'=>$e->getHeaders()['Retry-After'] ?? 0,
+                ], 429);
+            }
+        });
     })->create();
