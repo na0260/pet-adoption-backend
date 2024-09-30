@@ -29,7 +29,6 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->json([
                     'status' => 'error',
                     'message' => $e->getMessage(),
-                    'retry_after'=>$e->getHeaders()['Retry-After'] ?? 0,
                 ], 429);
             }
         });
