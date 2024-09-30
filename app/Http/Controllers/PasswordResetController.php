@@ -28,7 +28,7 @@ class PasswordResetController extends Controller
                 return response()->json([
                     'status' => 'error',
                     'message' => $validated->errors()
-                ], 400);
+                ], 422);
             }
 
             $otp = (string) rand(100000, 999999);
@@ -70,7 +70,7 @@ class PasswordResetController extends Controller
                 return response()->json([
                     'status' => 'error',
                     'message' => $validated->errors()
-                ], 400);
+                ], 422);
             }
 
             $user = User::where('email', $request->email)->first();
@@ -109,7 +109,7 @@ class PasswordResetController extends Controller
                 return response()->json([
                     'status' => 'error',
                     'message' => $validated->errors()
-                ], 400);
+                ], 422);
             }
 
             $user = User::where('email', $request->email)->first();
