@@ -16,9 +16,9 @@ Route::group(['prefix' => 'v1'], function () {
             Route::post('/logout', [AuthController::class, 'logout']);
             Route::get('/me', [AuthController::class, 'me']);
         });
-        Route::post('/send-otp', [PasswordResetController::class, 'sendOTP']);
-        Route::post('/validate-otp', [PasswordResetController::class, 'validateOTP']);
     });
+    Route::post('/send-otp', [PasswordResetController::class, 'sendOTP'])->middleware('throttle:3,1');
+    Route::post('/validate-otp', [PasswordResetController::class, 'validateOTP']);
+    Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']);
 });
-
 

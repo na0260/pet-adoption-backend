@@ -44,30 +44,39 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        try {
-            $credentials = $request->only('email', 'password');
+        $token = $request->bearerToken() || $request->cookie('token');
+        if ($token) {
+            return response()->json(['status' => "Failed", 'message' => 'User already logged in'], 400);
+        }else{
             try {
-                if (!$token = auth('api')->attempt($credentials)) {
-                    return response()->json(['status' => "Failed", 'message' => 'Unauthorized'], 401);
+                $credentials = $request->only('email', 'password');
+                try {
+                    if (!$token = auth('api')->attempt($credentials)) {
+                        return response()->json(['status' => "Failed", 'message' => 'Invalid Credential'], 401);
+                    }
+                } catch (JWTException $e) {
+                    return response()->json(['status' => "Failed", 'message' => $e->getMessage()], 500);
                 }
-            } catch (JWTException $e) {
-                return response()->json(['status' => "Failed", 'message' => $e->getMessage()], 500);
+
+                $expiration = 60 * 24;
+
+                $cookie = Cookie::make('token', $token, $expiration, '/', null, true, true, false, 'Strict');
+
+
+                return response()->json(['status' => "Success", 'token' => $token], 200)->cookie($cookie);
+            } catch (\Exception $e) {
+                return response()->json(['status' => "Error", 'message' => $e->getMessage()], 401);
             }
-
-            $expiration = 60 * 24;
-
-            $cookie = Cookie::make('token', $token, $expiration, '/', null, true, true, false, 'Strict');
-
-
-            return response()->json(['status' => "Success", 'token' => $token], 200)->cookie($cookie);
-        } catch (\Exception $e) {
-            return response()->json(['status' => "Error", 'message' => $e->getMessage()], 401);
         }
     }
 
     public function me(): JsonResponse
     {
-        return response()->json(auth('api')->user());
+        $user = auth('api')->user();
+        return response()->json(['status' => "Success", 'data' => [
+            'name' => $user->name,
+            'email' => $user->email,
+        ]], 200);
     }
 
     public function logout()
