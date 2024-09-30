@@ -42,4 +42,33 @@ class PasswordResetController extends Controller
             'message' => 'User not found'
         ], 404);
     }
+
+    public function validateOTP(Request $request)
+    {
+        $validated = Validator::make($request->all(), [
+            'email' => 'required|email|exists:users,email',
+            'otp' => 'required|digits:6'
+        ]);
+
+        if ($validated->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $validated->errors()
+            ], 400);
+        }
+
+        $user = User::where('email', $request->email)->first();
+
+        if ($user->otp == $request->otp) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'OTP validated successfully'
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'failed',
+            'message' => 'Invalid OTP'
+        ], 400);
+    }
 }
