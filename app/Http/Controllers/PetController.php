@@ -12,7 +12,7 @@ class PetController extends Controller
     {
         $user = auth('api')->user();
 
-        if ($user->role !== 'shelter') {
+        if ($user->role === 'user') {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Unauthorized'

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\PetController;
@@ -11,6 +12,10 @@ Route::group([
     'prefix' => 'v1',
     'middleware' => 'api',
     ], function () {
+    Route::group(['prefix' => 'admin', 'middleware' => JwtMiddleware::class], function () {
+        Route::get('/users', [AdminController::class, 'getUser']);
+        Route::get('/shelters', [AdminController::class, 'getShelter']);
+    });
     Route::group(['prefix' => 'auth'], function () {
         Route::post('/register', [AuthController::class, 'register'])->name('auth.register');
         Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1')->name('auth.login');
