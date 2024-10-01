@@ -24,6 +24,7 @@ Route::group([
 
     Route::group(['prefix' => 'shelter'], function () {
         Route::post('/register', [ShelterController::class, 'createShelter']);
+        Route::put('/update', [ShelterController::class, 'updateShelter'])->middleware(JwtMiddleware::class);
     });
 });
 
