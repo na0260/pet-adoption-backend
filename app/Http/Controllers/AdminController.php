@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Shelter;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -15,7 +16,7 @@ class AdminController extends Controller
             return response()->json(['status' => "Failed", 'message' => 'Unauthorized'], 401);
         }
         $users = User::all()->where('role', 'user');
-        $count = count($users);
+        $count = $users->count();
         return response()->json([
             'status' => "Success",
             'total_users'=> $count,
@@ -27,11 +28,11 @@ class AdminController extends Controller
         if ($user->role !== 'admin') {
             return response()->json(['status' => "Failed", 'message' => 'Unauthorized'], 401);
         }
-        $users = User::all()->where('role', 'shelter');
-        $count = count($users);
+        $shelters = Shelter::with('user','pets')->get();
+        $count = $shelters->count();
         return response()->json([
             'status' => "Success",
             'total_users'=> $count,
-            'data' => $users], 200);
+            'data' => $shelters], 200);
     }
 }
