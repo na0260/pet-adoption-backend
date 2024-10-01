@@ -4,12 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AdminController extends Controller
 {
     public function getUser(Request $request)
     {
-        $user = auth('api')->user();
+        $user = JWTAuth::authenticate();
         if ($user->role !== 'admin') {
             return response()->json(['status' => "Failed", 'message' => 'Unauthorized'], 401);
         }
@@ -22,7 +23,7 @@ class AdminController extends Controller
     }
     public function getShelter(Request $request)
     {
-        $user = auth('api')->user();
+        $user = JWTAuth::authenticate();
         if ($user->role !== 'admin') {
             return response()->json(['status' => "Failed", 'message' => 'Unauthorized'], 401);
         }

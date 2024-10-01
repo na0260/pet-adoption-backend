@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cookie;
 use Symfony\Component\HttpFoundation\Response;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Exceptions\TokenExpiredException;
@@ -26,12 +27,29 @@ class JwtMiddleware
 
         try {
             JWTAuth::setToken($token);
-            JWTAuth::authenticate();
+            $user = JWTAuth::authenticate();
+            $response = $next($request);
+
+            return $response->header('user-id', $user->id);
         } catch (TokenExpiredException $e) {
-            return response()->json(['error' => $e->getMessage()], 401);
+            try {
+                $refreshedToken = JWTAuth::refresh($token);
+                JWTAuth::setToken($refreshedToken);
+                $user = JWTAuth::authenticate();
+
+                $response = $next($request);
+                $expiration = 60 * 24;
+
+                $cookie = Cookie::make('token', $refreshedToken, $expiration, '/', null, true, true, false, 'Strict');
+
+                return $response->withCookie($cookie)->header('user-id', $user->id);
+            } catch (JWTException $e) {
+                return response()->json(['error' => 'Token expired, please log in again.'], 401);
+            }
         } catch (JWTException $e) {
-            return response()->json(['error' => $e->getMessage()], 401);
+            return response()->json(['error' => 'Unauthorized'], 401);
         }
-        return $next($request);
+
+        return response()->json(['error' => 'Something went wrong'], 500);
     }
 }

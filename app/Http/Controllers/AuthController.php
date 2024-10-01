@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use http\Header;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Exceptions\JWTException;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
 {
@@ -58,12 +60,10 @@ class AuthController extends Controller
                     return response()->json(['status' => "Failed", 'message' => $e->getMessage()], 500);
                 }
 
+                $user = auth('api')->user();
                 $expiration = 60 * 24;
-
                 $cookie = Cookie::make('token', $token, $expiration, '/', null, true, true, false, 'Strict');
-
-
-                return response()->json(['status' => "Success", 'token' => $token], 200)->cookie($cookie);
+                return response()->json(['status' => "Success", 'token' => $token], 200)->cookie($cookie)->header('user-id', $user->id);
             } catch (\Exception $e) {
                 return response()->json(['status' => "Error", 'message' => $e->getMessage()], 401);
             }
@@ -72,7 +72,7 @@ class AuthController extends Controller
 
     public function me(): JsonResponse
     {
-        $user = auth('api')->user();
+        $user = JWTAuth::authenticate();
         return response()->json(['status' => "Success", 'data' => [
             'name' => $user->name,
             'email' => $user->email,
@@ -83,12 +83,11 @@ class AuthController extends Controller
     public function logout()
     {
         try {
-            auth('api')->logout();
+            JWTAuth::invalidate(JWTAuth::getToken());
             $cookie = Cookie::forget('token');
+            return response()->json(['message' => 'Successfully logged out'])->cookie($cookie);
         } catch (JWTException $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
-
-        return response()->json(['message' => 'Successfully logged out'])->cookie($cookie);
     }
 }
