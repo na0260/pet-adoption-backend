@@ -102,6 +102,13 @@ class PetController extends Controller
      */
     public function show(string $id)
     {
+        $user = JWTAuth::authenticate();
+        if ($user->role === 'user') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized'
+            ], 401);
+        }
         $pet = Pet::with('shelter','petImages')->find($id);
 
         if (!$pet) {
@@ -130,6 +137,35 @@ class PetController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $pet = Pet::with('petImages')->find($id);
+        if (!$pet) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Pet not found'
+            ], 404);
+        }
+
+        $petImages = $pet->petImages;
+        DB::beginTransaction();
+        try {
+            foreach ($petImages as $image) {
+                if (file_exists(public_path($image->path))) {
+                    unlink(public_path($image->path));
+                }
+            }
+            $pet->petImages()->delete();
+            $pet->delete();
+            DB::commit();
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Pet deleted successfully'
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }

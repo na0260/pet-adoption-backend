@@ -34,7 +34,8 @@ Route::group([
     });
     Route::apiResource('/pets', PetController::class)->only(['index', 'show']);
     Route::group(['prefix' => 'pet','middleware'=>JwtMiddleware::class], function () {
-        Route::post('/add', [PetController::class, 'addPet'])->name('pet.add');
+        Route::post('/add', [PetController::class, 'store'])->name('pet.add');
+        Route::delete('/delete/{pet}', [PetController::class, 'destroy'])->name('pet.delete');
     });
 });
 
