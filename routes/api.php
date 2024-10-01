@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PasswordResetController;
+use App\Http\Controllers\PetController;
 use App\Http\Controllers\ShelterController;
 use App\Http\Middleware\JwtMiddleware;
 use Illuminate\Support\Facades\Route;
@@ -25,6 +26,9 @@ Route::group([
     Route::group(['prefix' => 'shelter'], function () {
         Route::post('/register', [ShelterController::class, 'createShelter']);
         Route::put('/update', [ShelterController::class, 'updateShelter'])->middleware(JwtMiddleware::class);
+        Route::group(['prefix' => 'pet'], function () {
+            Route::post('/add', [PetController::class, 'addPet'])->middleware(JwtMiddleware::class);
+        });
     });
 });
 
