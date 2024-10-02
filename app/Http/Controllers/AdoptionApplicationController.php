@@ -93,4 +93,41 @@ class AdoptionApplicationController extends Controller
             'data' => $application->load('pet'),
         ], 201);
     }
+
+    public function updateApplication(Request $request, string $id)
+    {
+        $user = JWTAuth::authenticate();
+        if ($user->role === 'user') {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'status' => 'required|string|in:pending,approved,rejected',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $validator->errors(),
+            ], 422);
+        }
+
+        $application = AdoptionApplication::find($id);
+        if (!$application) {
+            return response()->json(['message' => 'Adoption application not found.'], 404);
+        }
+        $pet = $application->pet;
+        if ($user->role === 'shelter' && $pet->shelter_id !== $user->shelter->id) {
+            return response()->json(['message' => 'You are not authorized to update this application.'], 403);
+        }
+
+        $application->status = $validator->validated()['status'];
+        $application->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Adoption application status updated successfully.',
+            'data' => $application,
+        ], 200);
+    }
 }
