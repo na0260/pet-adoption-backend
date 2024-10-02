@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AdoptionApplicationController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\PetController;
@@ -37,6 +38,10 @@ Route::group([
         Route::post('/add', [PetController::class, 'store'])->name('pet.add');
         Route::post('/update/{pet}', [PetController::class, 'update'])->name('pet.update');
         Route::delete('/delete/{pet}', [PetController::class, 'destroy'])->name('pet.delete');
+    });
+
+    Route::group(['prefix' => 'application','middleware'=>JwtMiddleware::class], function () {
+        Route::post('/submit/{pet}', [AdoptionApplicationController::class, 'submitApplication'])->name('application.submit');;
     });
 });
 
