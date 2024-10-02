@@ -103,13 +103,6 @@ class PetController extends Controller
      */
     public function show(string $id)
     {
-        $user = JWTAuth::authenticate();
-        if ($user->role === 'user') {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Unauthorized'
-            ], 401);
-        }
         $pet = Pet::with('shelter','petImages')->find($id);
 
         if (!$pet) {
@@ -218,6 +211,13 @@ class PetController extends Controller
      */
     public function destroy(string $id)
     {
+        $user = JWTAuth::authenticate();
+        if ($user->role === 'user') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized'
+            ], 401);
+        }
         $pet = Pet::with('petImages')->find($id);
         if (!$pet) {
             return response()->json([
