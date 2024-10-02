@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AdoptionApplication;
 use App\Models\Pet;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -10,6 +11,38 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AdoptionApplicationController extends Controller
 {
+    public function getApplication(Request $request)
+    {
+        $user = JWTAuth::authenticate();
+        if ($user->role === 'user'){
+            $applications = $user->adoptionApplications()->with('pet')->get();
+            $count = $applications->count();
+            return response()->json([
+                'status' => 'success',
+                'total_applications' => $count,
+                'data' => $applications,
+            ], 200);
+        }
+        if ($user->role === 'shelter'){
+            $pets = $user->shelter->pets;
+            $applications = AdoptionApplication::with('user', 'pet')->whereIn('pet_id', $pets->pluck('id'))->get();
+            $count = $applications->count();
+            return response()->json([
+                'status' => 'success',
+                'total_applications' => $count,
+                'data' => $applications,
+            ], 200);
+        }
+        if ($user->role === 'admin') {
+            $applications = AdoptionApplication::with('user', 'pet.shelter')->get();
+            $count = $applications->count();
+            return response()->json([
+                'status' => 'success',
+                'total_applications' => $count,
+                'data' => $applications,
+            ], 200);
+        }
+    }
     public function submitApplication(Request $request, string $id): JsonResponse
     {
         $user = JWTAuth::authenticate();

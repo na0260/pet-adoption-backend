@@ -41,7 +41,8 @@ Route::group([
     });
 
     Route::group(['prefix' => 'application','middleware'=>JwtMiddleware::class], function () {
-        Route::post('/submit/{pet}', [AdoptionApplicationController::class, 'submitApplication'])->name('application.submit');;
+        Route::post('/submit/{pet}', [AdoptionApplicationController::class, 'submitApplication'])->name('application.submit');
+        Route::get('/get', [AdoptionApplicationController::class, 'getApplication'])->name('application.get');
     });
 });
 
